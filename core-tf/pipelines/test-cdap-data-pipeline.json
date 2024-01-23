@@ -1,0 +1,150 @@
+{
+    "name": "Test1",
+    "description": "Data Pipeline Application",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.9.2",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": "4096",
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "SQL Server",
+                "to": "BigQuery"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "SQL Server",
+                "plugin": {
+                    "name": "SqlServer",
+                    "type": "batchsource",
+                    "label": "SQL Server",
+                    "artifact": {
+                        "name": "mssql-plugin",
+                        "version": "1.10.2",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "referenceName": "AdventureWorks2022",
+                        "database": "AdventureWorks2022",
+                        "importQuery": "select SalesOrderID, SalesOrderDetailID, OrderQty, ProductID, SpecialOfferID, UnitPrice, UnitPriceDiscount, LineTotal, rowguid, ModifiedDate from Sales.SalesOrderDetail",
+                        "numSplits": "1",
+                        "queryTimeout": "-1",
+                        "loginTimeout": "0",
+                        "columnEncryptionSetting": "false",
+                        "encrypt": "true",
+                        "trustServerCertificate": "true",
+                        "packetSize": "-1",
+                        "schema": "{\"type\":\"record\",\"name\":\"outputSchema\",\"fields\":[{\"name\":\"SalesOrderID\",\"type\":\"int\"},{\"name\":\"SalesOrderDetailID\",\"type\":\"int\"},{\"name\":\"OrderQty\",\"type\":\"int\"},{\"name\":\"ProductID\",\"type\":\"int\"},{\"name\":\"SpecialOfferID\",\"type\":\"int\"},{\"name\":\"UnitPrice\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"UnitPriceDiscount\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"LineTotal\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":6}},{\"name\":\"rowguid\",\"type\":\"string\"},{\"name\":\"ModifiedDate\",\"type\":{\"type\":\"string\",\"logicalType\":\"datetime\"}}]}",
+                        "host": "<SQL-PROXY-IP>",
+                        "port": "1433",
+                        "authenticationType": "SQL Login",
+                        "fetchSize": "1000",
+                        "jdbcPluginName": "sqlserver",
+                        "user": "sqlserver",
+                        "password": "P@ssword@111"
+                    }
+                },
+                "information": {
+                    "comments": {
+                        "list": [
+                            {
+                                "content": "",
+                                "createDate": 1690908421037
+                            }
+                        ]
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"outputSchema\",\"fields\":[{\"name\":\"SalesOrderID\",\"type\":\"int\"},{\"name\":\"SalesOrderDetailID\",\"type\":\"int\"},{\"name\":\"OrderQty\",\"type\":\"int\"},{\"name\":\"ProductID\",\"type\":\"int\"},{\"name\":\"SpecialOfferID\",\"type\":\"int\"},{\"name\":\"UnitPrice\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"UnitPriceDiscount\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"LineTotal\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":6}},{\"name\":\"rowguid\",\"type\":\"string\"},{\"name\":\"ModifiedDate\",\"type\":{\"type\":\"string\",\"logicalType\":\"datetime\"}}]}"
+                    }
+                ],
+                "id": "SQL-Server",
+                "type": "batchsource",
+                "label": "SQL Server",
+                "icon": "fa-plug",
+                "$$hashKey": "object:232",
+                "isPluginAvailable": true,
+                "_uiPosition": {
+                    "left": "1030px",
+                    "top": "360.5px"
+                }
+            },
+            {
+                "name": "BigQuery",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "BigQuery",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.22.2",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "project": "auto-detect",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "dataset": "adventureworks",
+                        "table": "SalesOrderDetail",
+                        "operation": "insert",
+                        "truncateTable": "true",
+                        "allowSchemaRelaxation": "false",
+                        "location": "US",
+                        "createPartitionedTable": "false",
+                        "partitioningType": "TIME",
+                        "partitionFilterRequired": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"outputSchema\",\"fields\":[{\"name\":\"SalesOrderID\",\"type\":\"int\"},{\"name\":\"SalesOrderDetailID\",\"type\":\"int\"},{\"name\":\"OrderQty\",\"type\":\"int\"},{\"name\":\"ProductID\",\"type\":\"int\"},{\"name\":\"SpecialOfferID\",\"type\":\"int\"},{\"name\":\"UnitPrice\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"UnitPriceDiscount\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"LineTotal\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":6}},{\"name\":\"rowguid\",\"type\":\"string\"},{\"name\":\"ModifiedDate\",\"type\":{\"type\":\"string\",\"logicalType\":\"datetime\"}}]}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"outputSchema\",\"fields\":[{\"name\":\"SalesOrderID\",\"type\":\"int\"},{\"name\":\"SalesOrderDetailID\",\"type\":\"int\"},{\"name\":\"OrderQty\",\"type\":\"int\"},{\"name\":\"ProductID\",\"type\":\"int\"},{\"name\":\"SpecialOfferID\",\"type\":\"int\"},{\"name\":\"UnitPrice\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"UnitPriceDiscount\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"LineTotal\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":6}},{\"name\":\"rowguid\",\"type\":\"string\"},{\"name\":\"ModifiedDate\",\"type\":{\"type\":\"string\",\"logicalType\":\"datetime\"}}]}",
+                "inputSchema": [
+                    {
+                        "name": "SQL Server",
+                        "schema": "{\"type\":\"record\",\"name\":\"outputSchema\",\"fields\":[{\"name\":\"SalesOrderID\",\"type\":\"int\"},{\"name\":\"SalesOrderDetailID\",\"type\":\"int\"},{\"name\":\"OrderQty\",\"type\":\"int\"},{\"name\":\"ProductID\",\"type\":\"int\"},{\"name\":\"SpecialOfferID\",\"type\":\"int\"},{\"name\":\"UnitPrice\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"UnitPriceDiscount\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":19,\"scale\":4}},{\"name\":\"LineTotal\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":6}},{\"name\":\"rowguid\",\"type\":\"string\"},{\"name\":\"ModifiedDate\",\"type\":{\"type\":\"string\",\"logicalType\":\"datetime\"}}]}"
+                    }
+                ],
+                "id": "BigQuery",
+                "type": "batchsink",
+                "label": "BigQuery",
+                "icon": "fa-plug",
+                "$$hashKey": "object:233",
+                "isPluginAvailable": true,
+                "_uiPosition": {
+                    "left": "1330px",
+                    "top": "360.5px"
+                }
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1,
+        "pushdownEnabled": false,
+        "transformationPushdown": {}
+    },
+    "version": "15331b29-8241-11ee-9c69-fa11b5a264ae"
+}
