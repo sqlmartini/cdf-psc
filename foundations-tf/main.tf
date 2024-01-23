@@ -205,12 +205,6 @@ resource "google_project_service" "enable_run_google_apis" {
   disable_dependent_services = true
 }
 
-resource "google_project_service" "enable_run_google_apis" {
-  project = var.project_id
-  service = "run.googleapis.com"
-  disable_dependent_services = true
-}
-
 resource "google_project_service" "enable_datalineage_google_apis" {
   project = var.project_id
   service = "datalineage.googleapis.com"
@@ -248,10 +242,10 @@ resource "time_sleep" "sleep_after_api_enabling" {
     google_project_service.enable_servicenetworking_google_apis,
     google_project_service.enable_cloudresourcemanager_google_apis,
     google_project_service.enable_dataform_google_apis,
-    google_project_service.bigqueryconnection,
-    google_project_service.cloudfunctions,
-    google_project_service.run,
-    enable_datalineage_google_apis,
-    enable_datacatalog_google_apis
+    google_project_service.enable_bigqueryconnection_google_apis,
+    google_project_service.enable_cloudfunctions_google_apis,
+    google_project_service.enable_run_google_apis,
+    google_project_service.enable_datalineage_google_apis,
+    google_project_service.enable_datacatalog_google_apis
   ]
 }

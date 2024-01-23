@@ -210,7 +210,7 @@ resource "time_sleep" "sleep_after_identities_permissions" {
  *****************************************/
 module "vpc_creation" {
   source                                 = "terraform-google-modules/network/google"
-  version                                = "~> 4.0"
+  version                                = "~> 9.0"
   project_id                             = local.project_id
   network_name                           = local.vpc_nm
   routing_mode                           = "REGIONAL"
