@@ -1,12 +1,9 @@
 terraform {
-  required_version = ">= 0.13"
+  required_version = "~> 1.3"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 3.53"
+      version = ">= 5.1"
     }
-  }
-  provider_meta "google" {
-    module_name = "blueprints/terraform/test/v0.0.1"
   }
 }

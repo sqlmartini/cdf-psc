@@ -243,25 +243,147 @@ module "vpc_creation" {
   depends_on = [time_sleep.sleep_after_identities_permissions]
 }
 
-output "subnet" {
-  value = tolist(module.vpc_creation.subnet_ids)[2]
+/******************************************
+5. VPC Network & Subnet Creation & Network Attachment
+ *****************************************/
+resource "google_compute_network" "default" {
+    project = local.project_id
+    name = local.vpc_nm
+    auto_create_subnetworks = false
+    depends_on = [time_sleep.sleep_after_identities_permissions]
 }
 
-/*
+resource "google_compute_subnetwork" "spark_subnet" {
+    project = local.project_id
+    name = local.spark_subnet_nm
+    region = local.location
+
+    network = google_compute_network.default.id
+    ip_cidr_range = local.spark_subnet_cidr
+    depends_on = [ google_compute_network.default ]
+}
+
+resource "google_compute_subnetwork" "composer_subnet" {
+    project = local.project_id
+    name = local.composer_subnet_nm
+    region = local.location
+
+    network = google_compute_network.default.id
+    ip_cidr_range = local.composer_subnet_cidr
+    depends_on = [ google_compute_network.default ]
+}
+
+resource "google_compute_subnetwork" "compute_subnet" {
+    project = local.project_id
+    name = local.compute_subnet_nm
+    region = local.location
+
+    network = google_compute_network.default.id
+    ip_cidr_range = local.compute_subnet_cidr
+    depends_on = [ google_compute_network.default ]
+}
+
 resource "google_compute_network_attachment" "default" {
     provider = google-beta
+    project = local.project_id
     name = "basic-network-attachment"
-    region = "us-central1"
+    region = local.location
     description = "basic network attachment description"
     connection_preference = "ACCEPT_MANUAL"
-
     subnetworks = [
-        #google_compute_subnetwork.default.self_link
-        vpc_creation.su
+        google_compute_subnetwork.compute_subnet.self_link
     ]
-
-    producer_accept_lists = [
-        google_project.accepted_producer_project.project_id
+    depends_on = [ google_compute_network.default, 
+      google_compute_subnetwork.compute_subnet,
+      google_compute_subnetwork.composer_subnet,
+      google_compute_subnetwork.spark_subnet
     ]
 }
-*/
+
+/******************************************
+6. Firewall rules creation
+ *****************************************/
+
+resource "google_compute_firewall" "allow_intra_snet_ingress_to_any" {
+  project   = local.project_id 
+  name      = "allow-intra-snet-ingress-to-any"
+  network   = local.vpc_nm
+  direction = "INGRESS"
+  source_ranges = [local.spark_subnet_cidr]
+  allow {
+    protocol = "all"
+  }
+  description        = "Creates firewall rule to allow ingress from within Spark subnet on all ports, all protocols"
+  depends_on = [google_compute_network_attachment.default]
+}
+
+/*******************************************
+Introducing sleep to minimize errors from
+dependencies having not completed
+********************************************/
+resource "time_sleep" "sleep_after_network_and_firewall_creation" {
+  create_duration = "120s"
+  depends_on = [ google_compute_firewall.allow_intra_snet_ingress_to_any ]
+}
+
+/******************************************
+9. BigQuery dataset creation
+******************************************/
+
+resource "google_bigquery_dataset" "bq_dataset_creation" {
+  dataset_id                  = local.bq_datamart_ds
+  location                    = "US"
+  project                     = local.project_id  
+}
+
+/******************************************
+10. Cloud SQL instance creation
+******************************************/
+
+module "sql-db_private_service_access" {
+  source        = "terraform-google-modules/sql-db/google//modules/private_service_access"
+  project_id    = local.project_id
+  vpc_network   = local.vpc_nm
+  depends_on = [ time_sleep.sleep_after_network_and_firewall_creation ]  
+}
+
+module "sql-db_mssql" {
+  source            = "terraform-google-modules/sql-db/google//modules/mssql"
+  name              = local.project_id
+  project_id        = local.project_id
+  region            = local.location  
+  availability_type = "ZONAL"
+  database_version  = "SQLSERVER_2022_STANDARD"
+  disk_size         = 100
+  root_password     = "P@ssword@111"
+  ip_configuration  = {
+    "allocated_ip_range": null,
+    "authorized_networks": [],
+    "ipv4_enabled": true,
+    "private_network": google_compute_network.default.id ,
+    "require_ssl": true
+    }
+  depends_on = [module.sql-db_private_service_access]
+}
+
+#Storage bucket for SQL Server backup file
+resource "google_storage_bucket" "cloudsql_bucket_creation" {
+  project                           = local.project_id 
+  name                              = local.cloudsql_bucket_nm
+  location                          = local.location
+  uniform_bucket_level_access       = true
+  force_destroy                     = true
+  depends_on = [module.sql-db_private_service_access]
+}
+
+#Grant Cloud SQL service account access to import backup from cloud storage
+resource "google_storage_bucket_iam_member" "member" {
+  bucket = google_storage_bucket.cloudsql_bucket_creation.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${module.sql-db_mssql.instance_service_account_email_address}"
+  depends_on = [module.sql-db_mssql]
+}
+
+/******************************************
+DONE
+******************************************/
